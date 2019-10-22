@@ -1,7 +1,4 @@
-try:
-    from urllib.parse import urljoin
-except ImportError:
-    from urlparse import urljoin
+from six.moves.urllib.parse import urljoin
 
 from django.conf import settings
 

@@ -1,6 +1,8 @@
+from six import iteritems
+
 from tastypie_swagger.mapping import ResourceSwaggerMapping
 
-from six import iteritems
+
 SWAGGER_V2_TYPE_MAP = {
     'List': ('array', None),
     'int': ('integer', 'int32'),
@@ -163,6 +165,9 @@ class ResourceSwagger2Mapping(ResourceSwaggerMapping):
         own right are mapped using $ref references. 
         """
         props = model.get('properties')
+        # the name of a resource's attribute is type
+        if 'type' in props:
+            props['_type'] = props.pop('type')
         def recurse(prop):
             if isinstance(prop, dict):
                 kind = prop.get('type')
@@ -174,14 +179,14 @@ class ResourceSwagger2Mapping(ResourceSwaggerMapping):
                 ref = prop.get('$ref')
                 if ref is not None and not ref.startswith('#'):
                     prop['$ref'] = self.get_model_ref(ref)
-                for key, subprop in iteritems(prop):
+                for _, subprop in iteritems(prop):
                     recurse(subprop)
-            # if a type is referenced remove 'type' and 'descriptions'
-            # to avoid warning 'other properties are defined at level ...'
-            # see https://github.com/go-swagger/go-swagger/issues/901
-            if '$ref' in prop and 'type' in prop:
-                del prop['type']
-                del prop['description']
+                # if a type is referenced remove 'type' and 'descriptions'
+                # to avoid warning 'other properties are defined at level ...'
+                # see https://github.com/go-swagger/go-swagger/issues/901
+                if '$ref' in prop and 'type' in prop:
+                    del prop['type']
+                    del prop['description']
         recurse(props)
 
     def get_model_ref_name(self, name):
